@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NameCloud · 取名</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================
+       Reset & Base - Apple Style
+       ============================================ */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #f5f5f7;
+      --card-bg: rgba(255,255,255,0.8);
+      --card-border: rgba(0,0,0,0.06);
+      --text-primary: #1d1d1f;
+      --text-secondary: #86868b;
+      --text-tertiary: #aeaeb2;
+      --accent: #0071e3;
+      --accent-hover: #0077ed;
+      --red: #ff3b30;
+      --orange: #ff9500;
+      --green: #34c759;
+      --shadow-sm: 0 2px 12px rgba(0,0,0,0.04);
+      --shadow-md: 0 8px 30px rgba(0,0,0,0.08);
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.12);
+      --radius-sm: 10px;
+      --radius-md: 16px;
+      --radius-lg: 24px;
+      --font-cn: 'Noto Serif SC', 'Songti SC', serif;
+      --font-en: 'Inter', -apple-system, 'Helvetica Neue', sans-serif;
+    }
+
+    body {
+      font-family: var(--font-en);
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* ============================================
+       Navigation
+       ============================================ */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(245,245,247,0.8);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      padding: 0 24px;
+      height: 52px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-family: var(--font-cn);
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      letter-spacing: 1px;
+    }
+
+    .nav-brand span {
+      color: var(--accent);
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 4px;
+    }
+
+    .nav-links button {
+      background: none;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-links button:hover {
+      background: rgba(0,0,0,0.05);
+      color: var(--text-primary);
+    }
+
+    .nav-links button.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ============================================
+       Main Container
+       ============================================ */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 80px 24px 40px;
+    }
+
+    /* ============================================
+       Hero Section
+       ============================================ */
+    .hero {
+      text-align: center;
+      padding: 40px 0 32px;
+    }
+
+    .hero h1 {
+      font-family: var(--font-cn);
+      font-size: 42px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+    }
+
+    .hero p {
+      font-size: 16px;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    /* ============================================
+       Input Section
+       ============================================ */
+    .input-section {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+
+    .input-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 0 14px;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+
+    .input-group:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+
+    .input-group label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .input-group input {
+      border: none;
+      background: none;
+      padding: 10px 0;
+      font-size: 15px;
+      font-family: var(--font-cn);
+      outline: none;
+      width: 100px;
+      color: var(--text-primary);
+    }
+
+    .input-group input::placeholder {
+      color: var(--text-tertiary);
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: white;
+      border: none;
+      padding: 10px 32px;
+      border-radius: var(--radius-sm);
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ============================================
+       Loading
+       ============================================ */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 60px 0;
+    }
+
+    .loading.active {
+      display: block;
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--card-border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading p {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    /* ============================================
+       Word Cloud
+       ============================================ */
+    .cloud-container {
+      display: none;
+      width: 100%;
+      min-height: 500px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(10px);
+      padding: 30px;
+      margin-bottom: 24px;
+    }
+
+    .cloud-container.active {
+      display: block;
+    }
+
+    .cloud-grid {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      align-items: center;
+      align-content: center;
+      gap: 12px 20px;
+      min-height: 440px;
+      width: 100%;
+    }
+
+    .cloud-word {
+      cursor: pointer;
+      transition: all 0.2s ease;
+      font-family: var(--font-cn);
+      white-space: nowrap;
+      user-select: none;
+      padding: 6px 12px;
+      border-radius: 8px;
+      display: inline-block;
+    }
+
+    .cloud-word:hover {
+      transform: scale(1.15);
+      color: var(--accent) !important;
+      background: rgba(0,113,227,0.08);
+    }
+
+    /* ============================================
+       Modal
+       ============================================ */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.3);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: white;
+      border-radius: var(--radius-lg);
+      max-width: 480px;
+      width: 100%;
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      animation: modalIn 0.3s ease;
+      position: relative;
+    }
+
+    @keyframes modalIn {
+      from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      border: none;
+      background: var(--bg);
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #e8e8ed;
+    }
+
+    .modal-name {
+      font-family: var(--font-cn);
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 4px;
+      letter-spacing: 2px;
+    }
+
+    .modal-score {
+      display: inline-block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--accent);
+      background: rgba(0,113,227,0.1);
+      padding: 2px 10px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .modal-section {
+      margin-bottom: 16px;
+    }
+
+    .modal-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .modal-section-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-tertiary);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 4px;
+    }
+
+    .modal-section-content {
+      font-size: 15px;
+      line-height: 1.7;
+      color: var(--text-primary);
+      font-family: var(--font-cn);
+    }
+
+    .modal-tags {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .modal-tag {
+      font-size: 12px;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: var(--bg);
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .modal-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 24px;
+      padding-top: 20px;
+      border-top: 1px solid var(--card-border);
+    }
+
+    .modal-actions button {
+      flex: 1;
+      padding: 10px;
+      border-radius: var(--radius-sm);
+      border: none;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-fav {
+      background: var(--bg);
+      color: var(--text-primary);
+    }
+
+    .btn-fav:hover {
+      background: #e8e8ed;
+    }
+
+    .btn-fav.active {
+      background: var(--green);
+      color: white;
+    }
+
+    .btn-discard {
+      background: var(--bg);
+      color: var(--red);
+    }
+
+    .btn-discard:hover {
+      background: rgba(255,59,48,0.1);
+    }
+
+    .btn-discard.active {
+      background: var(--red);
+      color: white;
+    }
+
+    /* ============================================
+       Favorites & Discard Pages
+       ============================================ */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    .page-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .page-header h2 {
+      font-family: var(--font-cn);
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .page-header .count {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      padding: 20px;
+      backdrop-filter: blur(10px);
+      transition: all 0.2s;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-sm);
+    }
+
+    .card-name {
+      font-family: var(--font-cn);
+      font-size: 22px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .card-meta {
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .card-meaning {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      font-family: var(--font-cn);
+      margin-bottom: 12px;
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .card-actions button {
+      padding: 5px 12px;
+      border-radius: 8px;
+      border: none;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn-sm-primary {
+      background: var(--accent);
+      color: white;
+    }
+
+    .btn-sm-primary:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-sm-danger {
+      background: rgba(255,59,48,0.1);
+      color: var(--red);
+    }
+
+    .btn-sm-danger:hover {
+      background: rgba(255,59,48,0.2);
+    }
+
+    .btn-sm-ghost {
+      background: var(--bg);
+      color: var(--text-secondary);
+    }
+
+    .btn-sm-ghost:hover {
+      background: #e8e8ed;
+    }
+
+    /* Star Rating */
+    .star-rating {
+      display: flex;
+      gap: 2px;
+    }
+
+    .star-rating .star {
+      font-size: 18px;
+      cursor: pointer;
+      color: #d2d2d7;
+      transition: color 0.15s;
+    }
+
+    .star-rating .star.active {
+      color: var(--orange);
+    }
+
+    .star-rating .star:hover {
+      color: var(--orange);
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--text-tertiary);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+    }
+
+    /* ============================================
+       Toast
+       ============================================ */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(80px);
+      background: var(--text-primary);
+      color: white;
+      padding: 10px 24px;
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      font-weight: 500;
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 300;
+      pointer-events: none;
+    }
+
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ============================================
+       Responsive
+       ============================================ */
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 32px; }
+      .container { padding: 72px 16px 24px; }
+      .cloud-container { min-height: 400px; padding: 20px; }
+      .modal { padding: 24px; }
+      .card-grid { grid-template-columns: 1fr; }
+      .input-section { flex-direction: column; align-items: stretch; }
+      .input-group { width: 100%; }
+      .input-group input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav>
+    <div class="nav-brand">Name<span>Cloud</span></div>
+    <div class="nav-links">
+      <button class="active" onclick="switchPage('home')">取名</button>
+      <button onclick="switchPage('favorites')">仓库</button>
+      <button onclick="switchPage('discarded')">抛弃池</button>
+    </div>
+  </nav>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ============================================
+       Page: Home
+       ============================================ -->
+  <div class="container page active" id="page-home">
+    <div class="hero">
+      <h1>取名</h1>
+      <p>输入姓氏或风格偏好，点击生成，AI 为您创作寓意美好的名字</p>
+    </div>
+
+    <div class="input-section">
+      <div class="input-group">
+        <label>姓</label>
+        <input type="text" id="surname" placeholder="可选" maxlength="2">
+      </div>
+      <div class="input-group">
+        <label>风格</label>
+        <input type="text" id="style" placeholder="如：文雅、大气" maxlength="10">
+      </div>
+      <button class="btn-primary" id="btnGenerate" onclick="handleGenerate()">生成名字</button>
+    </div>
+
+    <!-- Loading -->
+    <div class="loading" id="loading">
+      <div class="loading-spinner"></div>
+      <p>AI 正在为您创作名字...</p>
+    </div>
+
+    <!-- Word Cloud -->
+    <div class="cloud-container" id="cloud">
+      <div id="cloudWords"></div>
+    </div>
+  </div>
+
+  <!-- ============================================
+       Page: Favorites
+       ============================================ -->
+  <div class="container page" id="page-favorites">
+    <div class="page-header">
+      <h2>我的仓库</h2>
+      <span class="count" id="favCount">0 个收藏</span>
+    </div>
+    <div class="card-grid" id="favGrid"></div>
+    <div class="empty-state" id="favEmpty">
+      <div class="icon">📦</div>
+      <p>还没有收藏的名字，去取名看看吧</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       Page: Discarded
+       ============================================ -->
+  <div class="container page" id="page-discarded">
+    <div class="page-header">
+      <h2>抛弃池</h2>
+      <span class="count" id="discardCount">0 个</span>
+    </div>
+    <div class="card-grid" id="discardGrid"></div>
+    <div class="empty-state" id="discardEmpty">
+      <div class="icon">🗑️</div>
+      <p>抛弃池是空的</p>
+    </div>
+  </div>
+
+  <!-- ============================================
+       Modal
+       ============================================ -->
+  <div class="modal-overlay" id="modal">
+    <div class="modal">
+      <button class="modal-close" onclick="closeModal()">✕</button>
+      <div class="modal-name" id="modalName"></div>
+      <div class="modal-score" id="modalScore"></div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">单字解析</div>
+        <div class="modal-section-content" id="modalCharAnalysis"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">整体寓意</div>
+        <div class="modal-section-content" id="modalMeaning"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">诗词出处</div>
+        <div class="modal-section-content" id="modalPoem"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-section-label">标签</div>
+        <div class="modal-tags" id="modalTags"></div>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-fav" id="btnFav" onclick="handleFav()">♡ 收藏</button>
+        <button class="btn-discard" id="btnDiscard" onclick="handleDiscard()">✕ 抛弃</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="config.js"></script>
+  <script src="storage.js"></script>
+  <script src="ai.js"></script>
+  <script>
+    // ============================================
+    // App State
+    // ============================================
+    let currentNames = [];
+    let currentSurname = '';
+    let currentModalName = null;
+
+    // ============================================
+    // Page Switching
+    // ============================================
+    function switchPage(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-links button').forEach(b => b.classList.remove('active'));
+      document.getElementById(`page-${page}`).classList.add('active');
+      document.querySelector(`.nav-links button[onclick*="${page}"]`).classList.add('active');
+
+      if (page === 'favorites') renderFavorites();
+      if (page === 'discarded') renderDiscarded();
+    }
+
+    // ============================================
+    // Toast
+    // ============================================
+    let toastTimer;
+
+    function showToast(msg) {
+      const t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    // ============================================
+    // Generate Names
+    // ============================================
+    async function handleGenerate() {
+      const surname = document.getElementById('surname').value.trim();
+      const style = document.getElementById('style').value.trim();
+      currentSurname = surname;
+
+      const btn = document.getElementById('btnGenerate');
+      const loading = document.getElementById('loading');
+      const cloud = document.getElementById('cloud');
+
+      btn.disabled = true;
+      loading.classList.add('active');
+      cloud.classList.remove('active');
+
+      try {
+        let names;
+        // 如果 API Key 是默认值，使用模拟数据
+        if (CONFIG.DEEPSEEK_API_KEY === 'sk-你的APIKey') {
+          names = AI.generateMockNames(surname, style);
+        } else {
+          names = await AI.generateNames(surname, style);
+        }
+
+        currentNames = names;
+        renderCloud(names, surname);
+        cloud.classList.add('active');
+        showToast(`✨ 生成了 ${names.length} 个名字`);
+      } catch (err) {
+        showToast('❌ ' + err.message);
+      } finally {
+        btn.disabled = false;
+        loading.classList.remove('active');
+      }
+    }
+
+    // ============================================
+    // Render Word Cloud - Flex 网格布局
+    // ============================================
+    function renderCloud(names, surname) {
+      const container = document.getElementById('cloudWords');
+      container.innerHTML = '';
+
+      // 创建 flex 网格容器
+      const grid = document.createElement('div');
+      grid.className = 'cloud-grid';
+
+      // 按评分排序
+      const sorted = [...names].sort((a, b) => b.score - a.score);
+      const maxScore = Math.max(...names.map(n => n.score));
+      const minScore = Math.min(...names.map(n => n.score));
+      const range = maxScore - minScore || 1;
+
+      // 打乱顺序让大小名字交错分布
+      for (let i = sorted.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [sorted[i], sorted[j]] = [sorted[j], sorted[i]];
+      }
+
+      sorted.forEach((item) => {
+        const ratio = (item.score - minScore) / range;
+        const fontSize = 14 + ratio * 28;
+        const opacity = 0.6 + ratio * 0.4;
+        const displayName = surname ? surname + item.name : item.name;
+
+        const el = document.createElement('span');
+        el.className = 'cloud-word';
+        el.textContent = displayName;
+        el.style.fontSize = fontSize + 'px';
+        el.style.opacity = opacity;
+        el.style.color = getColorByScore(item.score);
+        el.title = `${item.meaning} (${item.score}分)`;
+        el.addEventListener('click', () => openModal(item, surname));
+
+        grid.appendChild(el);
+      });
+
+      container.appendChild(grid);
+    }
+
+    function getColorByScore(score) {
+      if (score >= 90) return '#1d1d1f';
+      if (score >= 80) return '#515154';
+      if (score >= 70) return '#86868b';
+      return '#aeaeb2';
+    }
+
+    // ============================================
+    // Modal
+    // ============================================
+    function openModal(item, surname) {
+      currentModalName = surname ? surname + item.name : item.name;
+      const data = { ...item, fullName: currentModalName };
+
+      document.getElementById('modalName').textContent = data.fullName;
+      document.getElementById('modalScore').textContent = `★ ${data.score} 分`;
+      document.getElementById('modalCharAnalysis').textContent = data.charAnalysis;
+      document.getElementById('modalMeaning').textContent = data.meaning;
+      document.getElementById('modalPoem').textContent = data.poem || '暂无直接出处';
+
+      // Tags
+      const tagsContainer = document.getElementById('modalTags');
+      tagsContainer.innerHTML = '';
+      const tags = [data.gender, data.style];
+      tags.forEach(t => {
+        const span = document.createElement('span');
+        span.className = 'modal-tag';
+        span.textContent = t;
+        tagsContainer.appendChild(span);
+      });
+
+      // 按钮状态
+      const btnFav = document.getElementById('btnFav');
+      const btnDiscard = document.getElementById('btnDiscard');
+      btnFav.textContent = Storage.isFavorite(data.fullName) ? '✓ 已收藏' : '♡ 收藏';
+      btnFav.classList.toggle('active', Storage.isFavorite(data.fullName));
+      btnDiscard.textContent = Storage.isDiscarded(data.fullName) ? '✓ 已抛弃' : '✕ 抛弃';
+      btnDiscard.classList.toggle('active', Storage.isDiscarded(data.fullName));
+
+      document.getElementById('modal').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modal').classList.remove('active');
+      currentModalName = null;
+    }
+
+    // 点击遮罩关闭
+    document.getElementById('modal').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    // ESC 关闭
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeModal();
+    });
+
+    // ============================================
+    // Favorite / Discard Actions
+    // ============================================
+    function handleFav() {
+      if (!currentModalName) return;
+      const item = currentNames.find(n => (currentSurname + n.name) === currentModalName);
+      if (!item) return;
+
+      const fullData = {
+        name: currentModalName,
+        charAnalysis: item.charAnalysis,
+        meaning: item.meaning,
+        gender: item.gender,
+        style: item.style,
+        poem: item.poem,
+        score: item.score,
+      };
+
+      if (Storage.isFavorite(currentModalName)) {
+        Storage.removeFavorite(currentModalName);
+        showToast('已取消收藏');
+      } else {
+        Storage.addFavorite(fullData);
+        showToast('✓ 已加入仓库');
+      }
+
+      // 更新按钮
+      const btnFav = document.getElementById('btnFav');
+      btnFav.textContent = Storage.isFavorite(currentModalName) ? '✓ 已收藏' : '♡ 收藏';
+      btnFav.classList.toggle('active', Storage.isFavorite(currentModalName));
+    }
+
+    function handleDiscard() {
+      if (!currentModalName) return;
+
+      if (Storage.isDiscarded(currentModalName)) {
+        Storage.restoreName(currentModalName);
+        showToast('已恢复');
+      } else {
+        Storage.discardName(currentModalName);
+        showToast('已加入抛弃池，后续不再生成');
+      }
+
+      const btnDiscard = document.getElementById('btnDiscard');
+      btnDiscard.textContent = Storage.isDiscarded(currentModalName) ? '✓ 已抛弃' : '✕ 抛弃';
+      btnDiscard.classList.toggle('active', Storage.isDiscarded(currentModalName));
+    }
+
+    // ============================================
+    // Favorites Page
+    // ============================================
+    function renderFavorites() {
+      const favs = Storage.getFavorites();
+      const grid = document.getElementById('favGrid');
+      const empty = document.getElementById('favEmpty');
+      const count = document.getElementById('favCount');
+
+      count.textContent = `${favs.length} 个收藏`;
+
+      if (favs.length === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+      grid.innerHTML = favs.map((item, idx) => `
+        <div class="card">
+          <div class="card-name">${item.name}</div>
+          <div class="card-meta">${item.gender} · ${item.style} · ★ ${item.score}</div>
+          <div class="card-meaning">${item.meaning}</div>
+          <div class="card-actions">
+            <div class="star-rating" data-idx="${idx}">
+              ${[1,2,3,4,5].map(s => `<span class="star ${s <= item.personalScore ? 'active' : ''}" data-score="${s}">★</span>`).join('')}
+            </div>
+            <button class="btn-sm-primary" onclick="viewFavoriteDetail('${item.name}')">详情</button>
+            <button class="btn-sm-danger" onclick="removeFavorite('${item.name}')">删除</button>
+          </div>
+        </div>
+      `).join('');
+
+      // 评分事件
+      document.querySelectorAll('.star-rating').forEach(container => {
+        const idx = parseInt(container.dataset.idx);
+        container.querySelectorAll('.star').forEach(star => {
+          star.addEventListener('click', () => {
+            const score = parseInt(star.dataset.score);
+            const favs = Storage.getFavorites();
+            if (favs[idx]) {
+              Storage.updateScore(favs[idx].name, score);
+              renderFavorites();
+              showToast(`已评分 ${score} 星`);
+            }
+          });
+        });
+      });
+    }
+
+    function viewFavoriteDetail(name) {
+      const favs = Storage.getFavorites();
+      const item = favs.find(f => f.name === name);
+      if (item) {
+        currentSurname = '';
+        currentNames = [item];
+        currentModalName = item.name;
+        openModal(item, '');
+      }
+    }
+
+    function removeFavorite(name) {
+      Storage.removeFavorite(name);
+      renderFavorites();
+      showToast('已移除');
+    }
+
+    // ============================================
+    // Discarded Page
+    // ============================================
+    function renderDiscarded() {
+      const data = Storage.getDiscarded();
+      const grid = document.getElementById('discardGrid');
+      const empty = document.getElementById('discardEmpty');
+      const count = document.getElementById('discardCount');
+
+      const total = data.names.length + data.styles.length;
+      count.textContent = `${total} 个`;
+
+      if (total === 0) {
+        grid.innerHTML = '';
+        empty.style.display = 'block';
+        return;
+      }
+
+      empty.style.display = 'none';
+
+      let html = '';
+
+      if (data.names.length > 0) {
+        html += '<div style="grid-column: 1 / -1; font-size: 13px; color: var(--text-secondary); font-weight: 600; margin-bottom: -8px;">已抛弃的名字</div>';
+        html += data.names.map(name => `
+          <div class="card">
+            <div class="card-name" style="font-size: 18px;">${name}</div>
+            <div class="card-meta">已抛弃 · 不再生成</div>
+            <div class="card-actions" style="margin-top: 12px;">
+              <button class="btn-sm-ghost" onclick="restoreName('${name}')">↩ 恢复</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      if (data.styles.length > 0) {
+        html += '<div style="grid-column: 1 / -1; font-size: 13px; color: var(--text-secondary); font-weight: 600; margin-bottom: -8px; margin-top: 8px;">已抛弃的风格</div>';
+        html += data.styles.map(style => `
+          <div class="card">
+            <div class="card-name" style="font-size: 18px;">${style}</div>
+            <div class="card-meta">已抛弃 · 不再生成此风格</div>
+            <div class="card-actions" style="margin-top: 12px;">
+              <button class="btn-sm-ghost" onclick="restoreStyle('${style}')">↩ 恢复</button>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function restoreName(name) {
+      Storage.restoreName(name);
+      renderDiscarded();
+      showToast('已恢复：' + name);
+    }
+
+    function restoreStyle(style) {
+      Storage.restoreStyle(style);
+      renderDiscarded();
+      showToast('已恢复风格：' + style);
+    }
+
+    // ============================================
+    // Init - 页面加载时预渲染
+    // ============================================
+    document.addEventListener('DOMContentLoaded', () => {
+      // 如果 localStorage 中有数据，预渲染
+      renderFavorites();
+      renderDiscarded();
+    });
+  </script>
+</body>
+</html>
