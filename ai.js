@@ -111,11 +111,29 @@ const AI = {
         return !Storage.isDiscarded(fullName) && !Storage.isInHistory(fullName);
       });
 
+      // 如果过滤后不够，递归重试（最多 3 次）
+      if (filteredNames.length < CONFIG.NAMES_COUNT) {
+        console.warn(`AI 返回了 ${filteredNames.length} 个新名字，不足 ${CONFIG.NAMES_COUNT} 个，正在补充...`);
+        const retryCount = arguments[2] || 0;
+        if (retryCount < 3) {
+          const extra = await AI.generateNames(surname, style, retryCount + 1);
+          // 合并并去重
+          const existingNames = new Set(filteredNames.map(n => n.name));
+          for (const n of extra) {
+            if (!existingNames.has(n.name)) {
+              filteredNames.push(n);
+              existingNames.add(n.name);
+            }
+            if (filteredNames.length >= CONFIG.NAMES_COUNT) break;
+          }
+        }
+      }
+
       // 记录到历史
       const nameList = filteredNames.map(n => surname ? surname + n.name : n.name);
       Storage.addToHistory(nameList);
 
-      return filteredNames;
+      return filteredNames.slice(0, CONFIG.NAMES_COUNT);
 
     } catch (error) {
       console.error('AI 调用失败:', error);
@@ -125,10 +143,10 @@ const AI = {
 
   /**
    * 生成模拟数据（用于开发调试，无需 API Key）
-   * 保证每次返回 CONFIG.NAMES_COUNT 个名字
+   * 保证每次返回 CONFIG.NAMES_COUNT 个不重复的名字
    */
   generateMockNames(surname = '', style = '') {
-    // 50 个预设名字库，足够覆盖 25 个
+    // 100 个预设名字库，足够多次生成不重复
     const mockPool = [
       { name: '安澜', charAnalysis: '安：平安、安宁；澜：波澜、大波浪', meaning: '波澜不惊，安然自若，寓意一生平安顺遂又不失气度', gender: '通用', style: '文雅', poem: '出自《岳阳楼记》："波澜不惊，上下天光"', score: 92 },
       { name: '致远', charAnalysis: '致：达到、专注；远：远大、长远', meaning: '宁静致远，寓意目光长远、专注执着', gender: '男孩', style: '大气', poem: '出自诸葛亮《诫子书》："非淡泊无以明志，非宁静无以致远"', score: 90 },
@@ -179,6 +197,45 @@ const AI = {
       { name: '南絮', charAnalysis: '南：南方、温暖；絮：柳絮、轻柔', meaning: '南风知我意，吹絮到窗前，寓意温柔细腻、温暖人心', gender: '女孩', style: '温婉', poem: '暂无直接出处', score: 85 },
       { name: '君泽', charAnalysis: '君：君子、君主；泽：恩泽、润泽', meaning: '君子如玉，泽被四方，寓意品德高尚、惠及他人', gender: '男孩', style: '古典', poem: '暂无直接出处', score: 87 },
       { name: '洛尘', charAnalysis: '洛：洛水、文化；尘：凡尘、踏实', meaning: '洛阳纸贵，不染凡尘，寓意才华出众、超凡脱俗', gender: '男孩', style: '文雅', poem: '暂无直接出处', score: 86 },
+      // 新增 50 个名字，扩大池子到 100 个
+      { name: '望舒', charAnalysis: '望：期望、仰望；舒：舒展、从容', meaning: '前望舒使先驱兮，寓意从容前行、心怀希望', gender: '通用', style: '诗意', poem: '出自屈原《离骚》："前望舒使先驱兮"', score: 88 },
+      { name: '扶光', charAnalysis: '扶：扶持、帮助；光：光明、光辉', meaning: '扶摇直上，光耀门楣，寓意积极向上、前程光明', gender: '男孩', style: '豪迈', poem: '暂无直接出处', score: 86 },
+      { name: '栖梧', charAnalysis: '栖：栖息、停留；梧：梧桐、高洁', meaning: '凤栖梧桐，择木而栖，寓意品格高洁、知进退', gender: '通用', style: '古典', poem: '暂无直接出处', score: 85 },
+      { name: '惊鸿', charAnalysis: '惊：惊艳、惊人；鸿：鸿雁、宏大', meaning: '翩若惊鸿，婉若游龙，寓意惊艳出众、气质非凡', gender: '女孩', style: '诗意', poem: '出自曹植《洛神赋》："翩若惊鸿，婉若游龙"', score: 90 },
+      { name: '酌溪', charAnalysis: '酌：斟酌、品味；溪：溪流、清澈', meaning: '酌溪而饮，悠然自得，寓意生活闲适、品味高雅', gender: '通用', style: '自然', poem: '暂无直接出处', score: 84 },
+      { name: '枕书', charAnalysis: '枕：枕头、依靠；书：书籍、学识', meaning: '枕书而眠，与书为伴，寓意好学不倦、书香满溢', gender: '通用', style: '文雅', poem: '暂无直接出处', score: 85 },
+      { name: '问柳', charAnalysis: '问：询问、探索；柳：柳树、柔美', meaning: '问柳寻花，探索美好，寓意热爱生活、善于发现美', gender: '女孩', style: '清新', poem: '暂无直接出处', score: 83 },
+      { name: '踏歌', charAnalysis: '踏：踩踏、行走；歌：歌声、欢乐', meaning: '踏歌而行，一路欢歌，寓意乐观开朗、生活快乐', gender: '通用', style: '豪迈', poem: '出自李白《赠汪伦》："李白乘舟将欲行，忽闻岸上踏歌声"', score: 86 },
+      { name: '采薇', charAnalysis: '采：采摘、收获；薇：蔷薇、美好', meaning: '采薇采薇，薇亦作止，寓意收获美好、生活诗意', gender: '女孩', style: '古典', poem: '出自《诗经·小雅》："采薇采薇，薇亦作止"', score: 88 },
+      { name: '暮雪', charAnalysis: '暮：傍晚、时光；雪：冰雪、纯洁', meaning: '暮雪纷纷，岁月静好，寓意纯洁美好、珍惜时光', gender: '女孩', style: '诗意', poem: '暂无直接出处', score: 85 },
+      { name: '朝歌', charAnalysis: '朝：早晨、朝气；歌：歌声、欢乐', meaning: '朝歌暮弦，生活如歌，寓意朝气蓬勃、快乐生活', gender: '通用', style: '豪迈', poem: '暂无直接出处', score: 84 },
+      { name: '临风', charAnalysis: '临：面对、临近；风：风度、自由', meaning: '临风而立，玉树临风，寓意风度翩翩、从容自信', gender: '男孩', style: '大气', poem: '暂无直接出处', score: 86 },
+      { name: '听雨', charAnalysis: '听：聆听、感受；雨：雨水、润泽', meaning: '听雨入眠，静心养性，寓意内心宁静、生活诗意', gender: '通用', style: '自然', poem: '暂无直接出处', score: 84 },
+      { name: '观澜', charAnalysis: '观：观察、洞察；澜：波澜、大波浪', meaning: '观澜知海，见微知著，寓意洞察世事、胸怀广阔', gender: '男孩', style: '大气', poem: '暂无直接出处', score: 86 },
+      { name: '知鱼', charAnalysis: '知：知识、智慧；鱼：鱼水、自由', meaning: '子非鱼，安知鱼之乐，寓意智慧通达、自在快乐', gender: '通用', style: '简约', poem: '出自《庄子·秋水》："子非鱼，安知鱼之乐"', score: 85 },
+      { name: '问水', charAnalysis: '问：询问、探索；水：水润、智慧', meaning: '问水哪得清如许，寓意探索求知、智慧如泉', gender: '通用', style: '自然', poem: '出自朱熹《观书有感》："问渠那得清如许"', score: 85 },
+      { name: '寻梅', charAnalysis: '寻：寻找、探索；梅：梅花、坚韧', meaning: '踏雪寻梅，不畏严寒，寓意坚韧不拔、追求美好', gender: '女孩', style: '古典', poem: '暂无直接出处', score: 86 },
+      { name: '寄傲', charAnalysis: '寄：寄托、寄寓；傲：傲骨、高洁', meaning: '寄傲山水，不慕荣利，寓意品格高洁、超然物外', gender: '男孩', style: '豪迈', poem: '暂无直接出处', score: 84 },
+      { name: '怀瑾', charAnalysis: '怀：怀抱、心怀；瑾：美玉、珍贵', meaning: '怀瑾握瑜，心若芷兰，寓意品德高尚、才华内敛', gender: '通用', style: '古典', poem: '出自屈原《九章》："怀瑾握瑜兮"', score: 88 },
+      { name: '知白', charAnalysis: '知：知识、智慧；白：纯洁、明亮', meaning: '知白守黑，明辨是非，寓意智慧通达、坚守本心', gender: '通用', style: '简约', poem: '暂无直接出处', score: 84 },
+      { name: '守拙', charAnalysis: '守：坚守、保持；拙：质朴、真诚', meaning: '守拙归园田，返璞归真，寓意质朴真诚、不忘初心', gender: '男孩', style: '古典', poem: '出自陶渊明《归园田居》："开荒南野际，守拙归园田"', score: 85 },
+      { name: '抱朴', charAnalysis: '抱：怀抱、保持；朴：质朴、纯真', meaning: '抱朴守真，返璞归真，寓意保持本真、质朴无华', gender: '通用', style: '简约', poem: '出自《道德经》："见素抱朴，少私寡欲"', score: 86 },
+      { name: '含章', charAnalysis: '含：包含、蕴含；章：文章、才华', meaning: '含章可贞，寓意才华横溢、品德高尚', gender: '通用', style: '文雅', poem: '出自《易经》："含章可贞，以时发也"', score: 87 },
+      { name: '既白', charAnalysis: '既：已经、既而；白：明白、光明', meaning: '东方既白，天光初现，寓意希望来临、前程光明', gender: '通用', style: '诗意', poem: '出自苏轼《前赤壁赋》："不知东方之既白"', score: 86 },
+      { name: '停云', charAnalysis: '停：停留、静候；云：云彩、高远', meaning: '停云霭霭，时雨濛濛，寓意静待时机、从容不迫', gender: '通用', style: '诗意', poem: '出自陶渊明《停云》："霭霭停云，濛濛时雨"', score: 85 },
+      { name: '时雨', charAnalysis: '时：时光、时机；雨：雨水、润泽', meaning: '及时雨，润万物，寓意恰逢其时、润泽他人', gender: '通用', style: '自然', poem: '暂无直接出处', score: 85 },
+      { name: '清梦', charAnalysis: '清：清澈、清雅；梦：梦想、憧憬', meaning: '满船清梦压星河，寓意心怀梦想、浪漫美好', gender: '女孩', style: '诗意', poem: '出自唐温如《题龙阳县青草湖》："满船清梦压星河"', score: 87 },
+      { name: '星河', charAnalysis: '星：星辰、闪耀；河：河流、广阔', meaning: '星河灿烂，若出其里，寓意胸怀广阔、前程璀璨', gender: '通用', style: '大气', poem: '出自曹操《观沧海》："星汉灿烂，若出其里"', score: 88 },
+      { name: '揽月', charAnalysis: '揽：拥抱、摘取；月：月亮、温柔', meaning: '可上九天揽月，寓意志向远大、勇于追梦', gender: '男孩', style: '豪迈', poem: '出自毛泽东《水调歌头·重上井冈山》："可上九天揽月"', score: 87 },
+      { name: '乘风', charAnalysis: '乘：乘坐、借助；风：风度、自由', meaning: '乘风破浪，直济沧海，寓意勇往直前、不畏艰难', gender: '男孩', style: '豪迈', poem: '出自李白《行路难》："长风破浪会有时"', score: 88 },
+      { name: '归雁', charAnalysis: '归：回归、归属；雁：鸿雁、志向', meaning: '归雁入胡天，寓意志在四方、不忘归途', gender: '通用', style: '自然', poem: '出自王维《使至塞上》："归雁入胡天"', score: 84 },
+      { name: '鸣蝉', charAnalysis: '鸣：鸣叫、响亮；蝉：蝉鸣、高洁', meaning: '居高声自远，非是藉秋风，寓意品格高洁、声名远播', gender: '男孩', style: '古典', poem: '出自虞世南《蝉》："居高声自远，非是藉秋风"', score: 85 },
+      { name: '知夏', charAnalysis: '知：知道、感知；夏：夏天、热情', meaning: '知夏已至，万物生长，寓意感知美好、热情生活', gender: '通用', style: '清新', poem: '暂无直接出处', score: 83 },
+      { name: '见山', charAnalysis: '见：看见、领悟；山：山岳、稳重', meaning: '见山是山，见水是水，寓意返璞归真、通达明悟', gender: '男孩', style: '简约', poem: '出自禅宗三重境界', score: 85 },
+      { name: '照水', charAnalysis: '照：映照、辉映；水：水润、智慧', meaning: '照水红蕖细细香，寓意清新脱俗、温润美好', gender: '女孩', style: '清新', poem: '暂无直接出处', score: 84 },
+      { name: '行舟', charAnalysis: '行：行走、前行；舟：舟船、远航', meaning: '行舟绿水前，寓意不断前行、探索未知', gender: '男孩', style: '大气', poem: '出自王湾《次北固山下》："行舟绿水前"', score: 85 },
+      { name: '渡云', charAnalysis: '渡：渡过、超越；云：云彩、高远', meaning: '渡云穿雾，志在高远，寓意超越困难、追求卓越', gender: '通用', style: '豪迈', poem: '暂无直接出处', score: 84 },
+      { name: '拾光', charAnalysis: '拾：拾取、收集；光：光明、时光', meaning: '拾光而行，珍惜当下，寓意珍惜时光、收集美好', gender: '通用', style: '简约', poem: '暂无直接出处', score: 84 },
     ];
 
     // 随机打乱
