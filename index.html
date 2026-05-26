@@ -827,12 +827,8 @@
 
       try {
         let names;
-        // 如果 API Key 是默认值，使用模拟数据
-        if (CONFIG.DEEPSEEK_API_KEY === 'sk-你的APIKey') {
-          names = AI.generateMockNames(surname, style);
-        } else {
-          names = await AI.generateNames(surname, style);
-        }
+        // 全部走 AI 生成（如果 API Key 是默认值会提示报错）
+        names = await AI.generateNames(surname, style);
 
         currentNames = names;
         renderCloud(names, surname);
