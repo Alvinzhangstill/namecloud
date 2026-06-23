@@ -658,11 +658,11 @@
       </div>
       <div class="input-group">
         <label>性别</label>
-        <select id="gender" style="border:none;background:none;padding:10px 0;font-size:15px;font-family:var(--font-cn);outline:none;color:var(--text-primary);cursor:pointer;">
-          <option value="通用">不限</option>
-          <option value="男孩">👦 男孩</option>
-          <option value="女孩" selected>👧 女孩</option>
-        </select>
+                <div class="gender-options">
+          <button class="gender-btn" data-gender="通用" onclick="selectGender(this, '通用')">不限</button>
+          <button class="gender-btn" data-gender="男孩" onclick="selectGender(this, '男孩')">男孩</button>
+          <button class="gender-btn active" data-gender="女孩" onclick="selectGender(this, '女孩')">女孩</button>
+        </div>
       </div>
       <button class="btn-primary" id="btnGenerate" onclick="handleGenerate()">生成名字</button>
     
@@ -672,7 +672,7 @@
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="loading-spinner"></div>
-      <p id="loadingText">AI 正在为您创作名字...</p>
+      <p>AI 正在为您创作名字...</p>
     </div>
 
     <!-- Word Cloud -->
@@ -776,48 +776,15 @@
 
     // ============================================
     // ============================================
-    // Load More
     // ============================================
-    async function loadMore() {
-      const btn = document.getElementById('btnLoadMore');
-      const gender = document.getElementById('gender').value;
-
-      if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
-
-      try {
-        const extraNames = await AI.generateNames(currentSurname, gender, 0, (newNames) => {
-          currentNames.push(...newNames);
-          renderCloud(currentNames, currentSurname);
-        });
-
-        const existing = new Set(currentNames.map(n => n.name));
-        for (const n of extraNames) {
-          if (!existing.has(n.name)) {
-            existing.add(n.name);
-            currentNames.push(n);
-          }
-        }
-        renderCloud(currentNames, currentSurname);
-        showToast(`✨ 新增 ${extraNames.length} 个名字`);
-      } catch (err) {
-        showToast('❌ ' + err.message);
-      } finally {
-        addLoadMoreButton();
-      }
+    // Gender Selection
+    // ============================================
+    function selectGender(btn, gender) {
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
     }
 
-    function addLoadMoreButton() {
-      document.getElementById('loadMoreRow')?.remove();
-      const cloud = document.getElementById('cloud');
-      if (!cloud.classList.contains('active')) return;
-      const row = document.createElement('div');
-      row.id = 'loadMoreRow';
-      row.style.cssText = 'text-align:center;margin-top:16px;';
-      row.innerHTML = '<button class="btn-primary" id="btnLoadMore" onclick="loadMore()" style="background:var(--bg);color:var(--accent);border:1px solid var(--accent);">✨ 加载更多</button>';
-      cloud.appendChild(row);
-    }
-
-    // ============================================
+// ============================================
     // Toast
     // ============================================
     let toastTimer;
@@ -836,40 +803,25 @@
     async function handleGenerate() {
       const surname = document.getElementById('surname').value.trim();
       currentSurname = surname;
-      const gender = document.getElementById('gender').value;
+      const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
 
       const btn = document.getElementById('btnGenerate');
       const loading = document.getElementById('loading');
       const cloud = document.getElementById('cloud');
-      const loadingText = document.getElementById('loadingText');
 
       btn.disabled = true;
       loading.classList.add('active');
       cloud.classList.remove('active');
-      currentNames = [];
-      document.getElementById('cloudWords').innerHTML = '';
-      document.getElementById('loadMoreRow')?.remove();
 
       try {
         let names;
         // 全部走 AI 生成（如果 API Key 是默认值会提示报错）
-        names = await AI.generateNames(surname, gender, 0, (newNames, totalCount) => {
-
-          // 首批名字到达时立即显示词云
-          if (!cloud.classList.contains('active')) {
-            cloud.classList.add('active');
-            loading.classList.remove('active');
-          }
-          currentNames.push(...newNames);
-          renderCloud(currentNames, surname);
-          if (loadingText) loadingText.textContent = `AI 正在创作... 已生成 ${totalCount} 个`;
-        });
+        names = await AI.generateNames(surname, gender);
 
         currentNames = names;
         renderCloud(names, surname);
-        cloud.classList.add('active');
+        cloud.classList.add("active");
         showToast(`✨ 生成了 ${names.length} 个名字`);
-        addLoadMoreButton();
       } catch (err) {
         showToast('❌ ' + err.message);
       } finally {
