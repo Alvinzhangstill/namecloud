@@ -189,110 +189,6 @@
       color: var(--text-tertiary);
     }
 
-    /* Gender Selector */
-    .gender-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .gender-label {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      white-space: nowrap;
-    }
-
-    .gender-options {
-      display: flex;
-      gap: 2px;
-      background: rgba(0,0,0,0.04);
-      border-radius: var(--radius-sm);
-      padding: 2px;
-    }
-
-    .gender-btn {
-      padding: 6px 14px;
-      border: none;
-      background: transparent;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-secondary);
-      cursor: pointer;
-      transition: all 0.2s;
-      white-space: nowrap;
-    }
-
-    .gender-btn:hover {
-      color: var(--text-primary);
-    }
-
-    .gender-btn.active {
-      background: white;
-      color: var(--accent);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-
-    /* Description */
-    .desc-section {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 28px;
-    }
-
-    .desc-section textarea {
-      width: 100%;
-      max-width: 500px;
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-sm);
-      padding: 10px 14px;
-      font-size: 14px;
-      font-family: var(--font-cn);
-      color: var(--text-primary);
-      outline: none;
-      resize: vertical;
-      backdrop-filter: blur(10px);
-    }
-
-    .desc-section textarea:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
-    }
-
-    .desc-section textarea::placeholder {
-      color: var(--text-tertiary);
-    }
-
-    .btn-primary {
-      background: var(--accent);
-      color: white;
-      border: none;
-      padding: 10px 32px;
-      border-radius: var(--radius-sm);
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.5px;
-    }
-
-    .btn-primary:hover {
-      background: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .btn-primary:active {
-      transform: translateY(0);
-    }
-
-    .btn-primary:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none;
-    }
-
     /* ============================================
        Loading
        ============================================ */
@@ -760,13 +656,13 @@
         <label>姓</label>
         <input type="text" id="surname" placeholder="可选" maxlength="2">
       </div>
-      <div class="gender-group">
-        <label class="gender-label">性别</label>
-        <div class="gender-options">
-          <button class="gender-btn" data-gender="通用" onclick="selectGender(this, '通用')">不限</button>
-          <button class="gender-btn" data-gender="男孩" onclick="selectGender(this, '男孩')">👦 男孩</button>
-          <button class="gender-btn active" data-gender="女孩" onclick="selectGender(this, '女孩')">👧 女孩</button>
-        </div>
+      <div class="input-group">
+        <label>性别</label>
+        <select id="gender" style="border:none;background:none;padding:10px 0;font-size:15px;font-family:var(--font-cn);outline:none;color:var(--text-primary);cursor:pointer;">
+          <option value="通用">不限</option>
+          <option value="男孩">👦 男孩</option>
+          <option value="女孩" selected>👧 女孩</option>
+        </select>
       </div>
       <button class="btn-primary" id="btnGenerate" onclick="handleGenerate()">生成名字</button>
     
@@ -879,19 +775,12 @@
     }
 
     // ============================================
-    // Gender Selection
-    // ============================================
-    function selectGender(btn, gender) {
-      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-    }
-
     // ============================================
     // Load More
     // ============================================
     async function loadMore() {
       const btn = document.getElementById('btnLoadMore');
-      const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
+      const gender = document.getElementById('gender').value;
 
       if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
 
@@ -947,7 +836,7 @@
     async function handleGenerate() {
       const surname = document.getElementById('surname').value.trim();
       currentSurname = surname;
-      const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
+      const gender = document.getElementById('gender').value;
 
       const btn = document.getElementById('btnGenerate');
       const loading = document.getElementById('loading');

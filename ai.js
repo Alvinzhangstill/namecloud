@@ -21,14 +21,23 @@ const AI = {
       if (inString) continue;
 
       if (ch === '{') {
-        if (depth === 0) start = i;
+        // 顶层对象（depth 0）或 names 数组内的 name 对象（depth 1）
+        if (depth === 0 || depth === 1) start = i;
         depth++;
       } else if (ch === '}') {
         depth--;
-        if (depth === 0 && start >= 0) {
+        if ((depth === 0 || depth === 1) && start >= 0) {
           try {
             const obj = JSON.parse(content.substring(start, i + 1));
-            if (obj.name && obj.score != null) results.push(obj);
+            // 顶层 {"names": [...]} 包装 → 一次性提取所有 name
+            if (obj.names && Array.isArray(obj.names)) {
+              for (const n of obj.names) {
+                if (n.name && n.score != null) results.push(n);
+              }
+            } else if (obj.name && obj.score != null) {
+              // 单个 name 对象
+              results.push(obj);
+            }
           } catch (_) { /* 尚未完整，忽略 */ }
           start = -1;
         }
@@ -41,7 +50,7 @@ const AI = {
    * 流式生成名字（支持 onProgress 回调）
    * 当提供 onProgress 时，名字随 AI 输出实时涌现，大幅提升感知速度
    */
-  async _generateStream(surname, gender, onProgress) {
+  async _generateStream(surname, gender, onProgress, retryCount = 0) {
     const discarded = Storage.getDiscarded();
     const history = Storage.getHistory();
     const givenHistory = Storage.getGivenNameHistory();
@@ -167,6 +176,12 @@ const AI = {
       Storage.addToGivenNameHistory(unique.map(n => n.name));
 
       finalResult = unique.slice(0, CONFIG.NAMES_COUNT);
+    }
+
+    // 流式生成后结果为空 → 递归重试（最多2次）
+    if (finalResult.length === 0 && retryCount < 2) {
+      console.warn('流式结果为空，重试中...');
+      return await this._generateStream(surname, gender, onProgress, retryCount + 1);
     }
 
     return finalResult;
