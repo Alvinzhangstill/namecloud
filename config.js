@@ -10,6 +10,6 @@ const CONFIG = {
   DEEPSEEK_API_URL: 'https://api.deepseek.com/v1/chat/completions',
   DEEPSEEK_MODEL: 'deepseek-chat',
   
-  // 每次生成名字数量
-  NAMES_COUNT: 25,
+  // 每次生成名字数量（减少以加速）
+  NAMES_COUNT: 12,
 };

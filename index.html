@@ -752,17 +752,13 @@
   <div class="container page active" id="page-home">
     <div class="hero">
       <h1>取名</h1>
-      <p>输入姓氏或风格偏好，点击生成，AI 为您创作寓意美好的名字</p>
+      <p>输入姓氏，选择性别，AI 即刻为您生成寓意美好的名字</p>
     </div>
 
     <div class="input-section">
       <div class="input-group">
         <label>姓</label>
         <input type="text" id="surname" placeholder="可选" maxlength="2">
-      </div>
-      <div class="input-group">
-        <label>风格</label>
-        <input type="text" id="style" placeholder="如：文雅、大气" maxlength="10">
       </div>
       <div class="gender-group">
         <label class="gender-label">性别</label>
@@ -774,15 +770,13 @@
       </div>
       <button class="btn-primary" id="btnGenerate" onclick="handleGenerate()">生成名字</button>
     
-    <div class="desc-section">
-      <textarea id="description" placeholder="补充描述（可选）：如希望名字有山水意境，五行属水，适合属龙的孩子、想要英文谐音，容易国际发音" maxlength="200" rows="2"></textarea>
-    </div>
+    
 </div>
 
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="loading-spinner"></div>
-      <p>AI 正在为您创作名字...</p>
+      <p id="loadingText">AI 正在为您创作名字...</p>
     </div>
 
     <!-- Word Cloud -->
@@ -893,6 +887,48 @@
     }
 
     // ============================================
+    // Load More
+    // ============================================
+    async function loadMore() {
+      const btn = document.getElementById('btnLoadMore');
+      const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
+
+      if (btn) { btn.disabled = true; btn.textContent = '生成中...'; }
+
+      try {
+        const extraNames = await AI.generateNames(currentSurname, gender, 0, (newNames) => {
+          currentNames.push(...newNames);
+          renderCloud(currentNames, currentSurname);
+        });
+
+        const existing = new Set(currentNames.map(n => n.name));
+        for (const n of extraNames) {
+          if (!existing.has(n.name)) {
+            existing.add(n.name);
+            currentNames.push(n);
+          }
+        }
+        renderCloud(currentNames, currentSurname);
+        showToast(`✨ 新增 ${extraNames.length} 个名字`);
+      } catch (err) {
+        showToast('❌ ' + err.message);
+      } finally {
+        addLoadMoreButton();
+      }
+    }
+
+    function addLoadMoreButton() {
+      document.getElementById('loadMoreRow')?.remove();
+      const cloud = document.getElementById('cloud');
+      if (!cloud.classList.contains('active')) return;
+      const row = document.createElement('div');
+      row.id = 'loadMoreRow';
+      row.style.cssText = 'text-align:center;margin-top:16px;';
+      row.innerHTML = '<button class="btn-primary" id="btnLoadMore" onclick="loadMore()" style="background:var(--bg);color:var(--accent);border:1px solid var(--accent);">✨ 加载更多</button>';
+      cloud.appendChild(row);
+    }
+
+    // ============================================
     // Toast
     // ============================================
     let toastTimer;
@@ -910,29 +946,41 @@
     // ============================================
     async function handleGenerate() {
       const surname = document.getElementById('surname').value.trim();
-      const style = document.getElementById('style').value.trim();
       currentSurname = surname;
-
       const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
-      const description = document.getElementById('description').value.trim();
 
       const btn = document.getElementById('btnGenerate');
       const loading = document.getElementById('loading');
       const cloud = document.getElementById('cloud');
+      const loadingText = document.getElementById('loadingText');
 
       btn.disabled = true;
       loading.classList.add('active');
       cloud.classList.remove('active');
+      currentNames = [];
+      document.getElementById('cloudWords').innerHTML = '';
+      document.getElementById('loadMoreRow')?.remove();
 
       try {
         let names;
         // 全部走 AI 生成（如果 API Key 是默认值会提示报错）
-        names = await AI.generateNames(surname, style, gender, description);
+        names = await AI.generateNames(surname, gender, 0, (newNames, totalCount) => {
+
+          // 首批名字到达时立即显示词云
+          if (!cloud.classList.contains('active')) {
+            cloud.classList.add('active');
+            loading.classList.remove('active');
+          }
+          currentNames.push(...newNames);
+          renderCloud(currentNames, surname);
+          if (loadingText) loadingText.textContent = `AI 正在创作... 已生成 ${totalCount} 个`;
+        });
 
         currentNames = names;
         renderCloud(names, surname);
         cloud.classList.add('active');
         showToast(`✨ 生成了 ${names.length} 个名字`);
+        addLoadMoreButton();
       } catch (err) {
         showToast('❌ ' + err.message);
       } finally {
