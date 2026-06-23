@@ -189,6 +189,82 @@
       color: var(--text-tertiary);
     }
 
+    /* Gender Selector */
+    .gender-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .gender-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .gender-options {
+      display: flex;
+      gap: 2px;
+      background: rgba(0,0,0,0.04);
+      border-radius: var(--radius-sm);
+      padding: 2px;
+    }
+
+    .gender-btn {
+      padding: 6px 14px;
+      border: none;
+      background: transparent;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .gender-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .gender-btn.active {
+      background: white;
+      color: var(--accent);
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    /* Description */
+    .desc-section {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 28px;
+    }
+
+    .desc-section textarea {
+      width: 100%;
+      max-width: 500px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 14px;
+      font-family: var(--font-cn);
+      color: var(--text-primary);
+      outline: none;
+      resize: vertical;
+      backdrop-filter: blur(10px);
+    }
+
+    .desc-section textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(0,113,227,0.15);
+    }
+
+    .desc-section textarea::placeholder {
+      color: var(--text-tertiary);
+    }
+
     .btn-primary {
       background: var(--accent);
       color: white;
@@ -688,8 +764,20 @@
         <label>风格</label>
         <input type="text" id="style" placeholder="如：文雅、大气" maxlength="10">
       </div>
+      <div class="gender-group">
+        <label class="gender-label">性别</label>
+        <div class="gender-options">
+          <button class="gender-btn" data-gender="通用" onclick="selectGender(this, '通用')">不限</button>
+          <button class="gender-btn" data-gender="男孩" onclick="selectGender(this, '男孩')">👦 男孩</button>
+          <button class="gender-btn active" data-gender="女孩" onclick="selectGender(this, '女孩')">👧 女孩</button>
+        </div>
+      </div>
       <button class="btn-primary" id="btnGenerate" onclick="handleGenerate()">生成名字</button>
+    
+    <div class="desc-section">
+      <textarea id="description" placeholder="补充描述（可选）：如希望名字有山水意境，五行属水，适合属龙的孩子、想要英文谐音，容易国际发音" maxlength="200" rows="2"></textarea>
     </div>
+</div>
 
     <!-- Loading -->
     <div class="loading" id="loading">
@@ -797,6 +885,14 @@
     }
 
     // ============================================
+    // Gender Selection
+    // ============================================
+    function selectGender(btn, gender) {
+      document.querySelectorAll('.gender-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    }
+
+    // ============================================
     // Toast
     // ============================================
     let toastTimer;
@@ -817,6 +913,9 @@
       const style = document.getElementById('style').value.trim();
       currentSurname = surname;
 
+      const gender = document.querySelector('.gender-btn.active')?.dataset?.gender || '通用';
+      const description = document.getElementById('description').value.trim();
+
       const btn = document.getElementById('btnGenerate');
       const loading = document.getElementById('loading');
       const cloud = document.getElementById('cloud');
@@ -828,7 +927,7 @@
       try {
         let names;
         // 全部走 AI 生成（如果 API Key 是默认值会提示报错）
-        names = await AI.generateNames(surname, style);
+        names = await AI.generateNames(surname, style, gender, description);
 
         currentNames = names;
         renderCloud(names, surname);

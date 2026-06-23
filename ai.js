@@ -7,35 +7,64 @@ const AI = {
    * 调用 DeepSeek 生成一批名字
    * @param {string} surname - 姓氏（可选）
    * @param {string} style - 风格偏好（可选）
+   * @param {string} gender - 性别：男孩/女孩/通用（可选）
+   * @param {string} description - 自定义需求描述（可选）
    * @param {number} retryCount - 递归重试次数（内部使用）
    * @returns {Promise<Array>} 名字数组
    */
-  async generateNames(surname = '', style = '', retryCount = 0) {
+  async generateNames(surname = '', style = '', gender = '通用', description = '', retryCount = 0) {
     const discarded = Storage.getDiscarded();
     const history = Storage.getHistory();
+    const givenHistory = Storage.getGivenNameHistory();
+
+    // 构建姓氏相关禁止列表
+    const surnameChars = new Set();
+    if (surname) {
+      for (const ch of surname) surnameChars.add(ch);
+    }
 
     // 构建 prompt
     let prompt = `你是一位精通中文取名的大师。请生成 ${CONFIG.NAMES_COUNT} 个中文名字（不含姓氏），每个名字2个字。`;
 
     if (surname) {
-      prompt += `\n姓氏为"${surname}"，请结合姓氏生成完整的姓名。`;
+      prompt += `\n姓氏为"${surname}"。`;
+      prompt += `\n⚠️ 重要：给定名字（given name）中绝对不能包含"${surname}"中的任何字，也不要以"${surname}"的任何字开头。例如姓"张"时，名字不能是"张澜"或"学张"等。`;
     }
 
     if (style) {
       prompt += `\n风格偏好：${style}。`;
     }
 
+    if (gender && gender !== '通用') {
+      prompt += `\n性别倾向：${gender}。`;
+    }
+
+    if (description) {
+      prompt += `\n用户需求描述：${description}。请务必充分考虑以上描述来生成名字。`;
+    }
+
+    // 常见姓氏提醒 — 名字首字不要是常见姓氏
+    const commonSurnamesForPrompt = Storage.getCommonSurnames ?
+      [...Storage.getCommonSurnames()].filter(s => s.length === 1).slice(0, 80) :
+      [...COMMON_SURNAMES].filter(s => s.length === 1).slice(0, 80);
+    prompt += `\n⚠️ 以下为常见中文姓氏，名字的首字不得是这些字：${commonSurnamesForPrompt.join('、')}。`;
+
     // 抛弃池信息
     if (discarded.names.length > 0) {
-      prompt += `\n以下名字已被用户排除，请不要再生成：${discarded.names.join('、')}。`;
+      prompt += `\n以下名字已被用户排除，请不要再生成这些完整姓名：${discarded.names.join('、')}。`;
     }
     if (discarded.styles.length > 0) {
       prompt += `\n以下风格已被用户排除，请避免这些风格：${discarded.styles.join('、')}。`;
     }
 
-    // 历史记录去重（传入最近 200 个已生成的名字，让 AI 避免重复）
+    // 完整姓名历史去重（传入最近 200 个）
     if (history.length > 0) {
-      prompt += `\n以下名字已经出现过，请不要再生成：${history.slice(-200).join('、')}。`;
+      prompt += `\n以下完整姓名已经出现过，请不要再生成其中相同的 given name：${history.slice(-200).join('、')}。`;
+    }
+
+    // Given-name 历史去重（跨姓氏重复）
+    if (givenHistory.length > 0) {
+      prompt += `\n以下名字（given name）已经用过，请不要再生成：${givenHistory.slice(-200).join('、')}。`;
     }
 
     prompt += `\n
@@ -58,9 +87,11 @@ const AI = {
 - 每个名字必须寓意美好，有文化底蕴
 - 评分范围 60-99 分
 - 风格标签从以下选择：文雅、大气、现代、古典、自然、简约、诗意、温婉、豪迈、清新
-- 适合性别：男孩、女孩、通用
+${gender && gender !== '通用' ? `- 适合性别：${gender}` : '- 适合性别：男孩、女孩、通用'}
 - 诗词出处尽量真实，如果不确定可以写"暂无直接出处"
-- 确保名字不重复，且与上面列出的已存在名字不重复`;
+- 名字首字不能是常见姓氏字
+${surname ? `- 名字中绝对不能出现"${surname}"中的任何字` : ''}
+- 确保名字不重复`;
 
     try {
       const response = await fetch(CONFIG.DEEPSEEK_API_URL, {
@@ -106,13 +137,49 @@ const AI = {
         throw new Error('AI 返回数据格式不正确');
       }
 
-      // 过滤掉抛弃池和历史中的名字（二次保障）
-      const filteredNames = result.names.filter(n => {
+      // ============================================
+      // 多层过滤：确保名字质量
+      // ============================================
+
+      // 第1层：过滤掉抛弃池和历史中的完整姓名
+      let filteredNames = result.names.filter(n => {
         const fullName = surname ? surname + n.name : n.name;
         return !Storage.isDiscarded(fullName) && !Storage.isInHistory(fullName);
       });
 
-      // 自身去重（同一批返回中可能有重复）
+      // 第2层：过滤 given name 含姓氏字的情况
+      if (surname) {
+        filteredNames = filteredNames.filter(n => {
+          for (const ch of surname) {
+            if (n.name.includes(ch)) {
+              console.warn(`⛔ 过滤：名字"${n.name}"包含姓氏字"${ch}"`);
+              return false;
+            }
+          }
+          return true;
+        });
+      }
+
+      // 第3层：过滤 given name 首字为强姓氏的情况（保守列表，避免误伤"安澜"等）
+      filteredNames = filteredNames.filter(n => {
+        if (Storage.isStrongSurname(n.name[0])) {
+          console.warn(`⛔ 过滤：名字"${n.name}"首字"${n.name[0]}"是强姓氏`);
+          return false;
+        }
+        return true;
+      });
+
+      // 第4层：过滤 given-name 历史（跨姓氏去重）
+      const givenHistory = Storage.getGivenNameHistory();
+      filteredNames = filteredNames.filter(n => {
+        if (Storage.isInGivenNameHistory(n.name)) {
+          console.warn(`⛔ 过滤：given name"${n.name}"已在使用历史中`);
+          return false;
+        }
+        return true;
+      });
+
+      // 第5层：自身批量去重（同一批返回中可能有重复）
       const uniqueNames = [];
       const seen = new Set();
       for (const n of filteredNames) {
@@ -125,7 +192,7 @@ const AI = {
       // 如果过滤后不够，递归重试补充（最多 3 次）
       if (uniqueNames.length < CONFIG.NAMES_COUNT && retryCount < 3) {
         console.warn(`AI 返回了 ${uniqueNames.length} 个新名字，不足 ${CONFIG.NAMES_COUNT} 个，正在补充...`);
-        const extra = await AI.generateNames(surname, style, retryCount + 1);
+        const extra = await AI.generateNames(surname, style, gender, description, retryCount + 1);
         // 合并并去重
         for (const n of extra) {
           if (!seen.has(n.name)) {
@@ -136,9 +203,10 @@ const AI = {
         }
       }
 
-      // 记录到历史
+      // 记录到历史（完整姓名 + given name 分别记录）
       const nameList = uniqueNames.map(n => surname ? surname + n.name : n.name);
       Storage.addToHistory(nameList);
+      Storage.addToGivenNameHistory(uniqueNames.map(n => n.name));
 
       return uniqueNames.slice(0, CONFIG.NAMES_COUNT);
 
