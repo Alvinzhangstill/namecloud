@@ -190,6 +190,67 @@
       color: var(--text-tertiary);
     }
 
+    .gender-options {
+      display: inline-grid;
+      grid-template-columns: repeat(3, minmax(46px, 1fr));
+      gap: 2px;
+      padding: 3px;
+      background: rgba(120,120,128,0.12);
+      border-radius: 18px;
+    }
+
+    .gender-btn {
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      min-height: 28px;
+      padding: 0 10px;
+      border-radius: 15px;
+      font-size: 13px;
+      font-weight: 600;
+      font-family: var(--font-en);
+      cursor: pointer;
+      transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .gender-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .gender-btn.active {
+      background: #fff;
+      color: var(--text-primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-primary {
+      min-height: 44px;
+      border: none;
+      border-radius: 24px;
+      padding: 0 24px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      font-family: var(--font-en);
+      cursor: pointer;
+      box-shadow: 0 8px 20px rgba(0,113,227,0.18);
+      transition: background 0.18s ease, transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 10px 24px rgba(0,113,227,0.24);
+    }
+
+    .btn-primary:disabled {
+      cursor: default;
+      opacity: 0.68;
+      transform: none;
+      box-shadow: none;
+    }
+
     /* ============================================
        Loading
        ============================================ */
@@ -220,6 +281,56 @@
     .loading p {
       color: var(--text-secondary);
       font-size: 14px;
+    }
+
+    .generation-status {
+      display: none;
+      background: #fff;
+      border: 1px solid var(--card-border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+
+    .generation-status.active {
+      display: block;
+    }
+
+    .status-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
+    }
+
+    .status-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .status-count {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--accent);
+      white-space: nowrap;
+    }
+
+    .progress-track {
+      height: 7px;
+      background: rgba(0,113,227,0.10);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-bar {
+      width: 0%;
+      height: 100%;
+      background: var(--accent);
+      border-radius: inherit;
+      transition: width 0.25s ease;
     }
 
     /* ============================================
@@ -266,6 +377,16 @@
       transform: scale(1.15);
       color: var(--accent) !important;
       background: rgba(0,113,227,0.08);
+    }
+
+    .cloud-placeholder {
+      min-height: 280px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      font-size: 14px;
+      text-align: center;
     }
 
     /* ============================================
@@ -669,6 +790,16 @@
     
 </div>
 
+    <div class="generation-status" id="generationStatus">
+      <div class="status-row">
+        <span class="status-title" id="statusTitle">正在生成名字</span>
+        <span class="status-count" id="statusCount">0 / 12</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-bar" id="progressBar"></div>
+      </div>
+    </div>
+
     <!-- Loading -->
     <div class="loading" id="loading">
       <div class="loading-spinner"></div>
@@ -752,6 +883,7 @@
   <script src="config.local.js"></script>
   <script src="config.js"></script>
   <script src="storage.js"></script>
+  <script src="name-engine.js"></script>
   <script src="ai.js"></script>
   <script>
     // ============================================
@@ -810,24 +942,60 @@
       const cloud = document.getElementById('cloud');
 
       btn.disabled = true;
-      loading.classList.add('active');
-      cloud.classList.remove('active');
+      btn.textContent = '生成中...';
+      loading.classList.remove('active');
+      cloud.classList.add('active');
+      currentNames = [];
+      renderCloud(currentNames, surname);
+      updateGenerationStatus(0, CONFIG.NAMES_COUNT, '名字会逐个出现');
 
       try {
-        let names;
-        // 全部走 AI 生成（如果 API Key 是默认值会提示报错）
-        names = await AI.generateNames(surname, gender);
+        const names = await AI.generateNames(surname, gender, {
+          onProgress: (newNames) => {
+            currentNames = mergeNameLists(currentNames, newNames);
+            renderCloud(currentNames, surname);
+            updateGenerationStatus(currentNames.length, CONFIG.NAMES_COUNT, '正在补齐解析');
+          },
+        });
 
-        currentNames = names;
-        renderCloud(names, surname);
-        cloud.classList.add("active");
+        currentNames = mergeNameLists(currentNames, names);
+        renderCloud(currentNames, surname);
+        updateGenerationStatus(currentNames.length, CONFIG.NAMES_COUNT, '生成完成');
         showToast(`✨ 生成了 ${names.length} 个名字`);
       } catch (err) {
         showToast('❌ ' + err.message);
+        updateGenerationStatus(currentNames.length, CONFIG.NAMES_COUNT, '生成失败，请重试');
       } finally {
         btn.disabled = false;
-        loading.classList.remove('active');
+        btn.textContent = '生成名字';
       }
+    }
+
+    function updateGenerationStatus(count, total, title) {
+      const status = document.getElementById('generationStatus');
+      const titleEl = document.getElementById('statusTitle');
+      const countEl = document.getElementById('statusCount');
+      const bar = document.getElementById('progressBar');
+      const safeTotal = total || CONFIG.NAMES_COUNT;
+      const percent = Math.min(100, Math.round((count / safeTotal) * 100));
+
+      status.classList.add('active');
+      titleEl.textContent = title;
+      countEl.textContent = `${Math.min(count, safeTotal)} / ${safeTotal}`;
+      bar.style.width = percent + '%';
+    }
+
+    function mergeNameLists(existing, incoming) {
+      const seen = new Set();
+      const merged = [];
+
+      [...existing, ...incoming].forEach(item => {
+        if (!item || !item.name || seen.has(item.name)) return;
+        seen.add(item.name);
+        merged.push(item);
+      });
+
+      return merged.slice(0, CONFIG.NAMES_COUNT);
     }
 
     // ============================================
@@ -836,6 +1004,14 @@
     function renderCloud(names, surname) {
       const container = document.getElementById('cloudWords');
       container.innerHTML = '';
+
+      if (!names || names.length === 0) {
+        const placeholder = document.createElement('div');
+        placeholder.className = 'cloud-placeholder';
+        placeholder.textContent = '等待第一批名字出现...';
+        container.appendChild(placeholder);
+        return;
+      }
 
       // 创建 flex 网格容器
       const grid = document.createElement('div');
